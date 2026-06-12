@@ -69,6 +69,8 @@ Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/Editor/*
 Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/Editor/Scripts/*
 !Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/Editor/Scripts/StarterAssetsSampleProjectValidation.cs
 !Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/Editor/Scripts/StarterAssetsSampleProjectValidation.cs.meta
+!Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/XRI Default Input Actions.inputactions
+!Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/XRI Default Input Actions.inputactions.meta
 
 # Local viewer/probe tools contain browser profiles and captured streams.
 Tools/
