@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 17feb724c7e004b4e8e418931db7eff3
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Runtime/Shaders/Utility/Legacy/CaptureShadowMatrices.shader
+  uploadId: 891564

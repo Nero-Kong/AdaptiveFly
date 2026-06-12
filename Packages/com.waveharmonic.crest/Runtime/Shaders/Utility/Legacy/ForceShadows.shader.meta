@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c9f384b6b84e943ed83161cb82d95b2e
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Runtime/Shaders/Utility/Legacy/ForceShadows.shader
+  uploadId: 891564

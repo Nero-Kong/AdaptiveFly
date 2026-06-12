@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 0c03a1671f6a84ed4ac42813e95a07d7
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Editor/Scripts/Utility/Shared/ScriptingSymbols.cs
+  uploadId: 891564

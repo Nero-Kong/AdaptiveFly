@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Stylized_WaterVolume
+  m_Shader: {fileID: 4800000, guid: 034b985bd9c344992af148e26d2cdb24, type: 3}
+  m_Parent: {fileID: 2100000, guid: f2b096e4d95e646c49d48ece0afa0547, type: 2}
+  m_ModifiedSerializedProperties: 2
+  m_ValidKeywords:
+  - d_Crest_NoMaskDepth
+  - d_Dithering
+  m_InvalidKeywords:
+  - _ALPHATEST_ON
+  - _BUILTIN_ALPHATEST_ON
+  - _BUILTIN_AlphaClip
+  - _BUILTIN_SPECULAR_SETUP
+  - _BUILTIN_SURFACE_TYPE_TRANSPARENT
+  - _BUILTIN_TRANSPARENT_RECEIVES_SHADOWS
+  - _DOUBLESIDED_ON
+  - _ENABLE_FOG_ON_TRANSPARENT
+  - _SPECULAR_SETUP
+  - _SURFACE_TYPE_TRANSPARENT
+  - _TRANSPARENT_WRITES_MOTION_VEC
+  m_LightmapFlags: 0
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Crest_Anisotropy: 0.2
+    - _Crest_CausticsDistortionScale: 900
+    - _Crest_CausticsTextureAverage: 0
+    - _Crest_CausticsTextureScale: 100
+    - _Crest_OutScatteringExtinctionFactor: 0
+    - _Crest_OutScatteringFactor: 0
+    m_Colors:
+    - _Crest_AbsorptionColor: {r: 0.588, g: 0.9778153, b: 1, a: 0.05882353}
+    - _Crest_Scattering: {r: 0, g: 0.040789474, b: 0.05, a: 1}
+  m_BuildTextureStacks: []

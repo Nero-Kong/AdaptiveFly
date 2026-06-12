@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a8dc4e412bc6749cca29b3232bcb0f18
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Samples~/Boats/Materials/Boats_Water.mat
+  uploadId: 891564

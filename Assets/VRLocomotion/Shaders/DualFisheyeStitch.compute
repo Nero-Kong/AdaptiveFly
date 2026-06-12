@@ -1,0 +1,132 @@
+// DualFisheyeStitch.compute
+// Converts a side-by-side dual-fisheye frame into an equirectangular panorama.
+// The expected source layout is:
+//   left lens  = front hemisphere (+Z)
+//   right lens = rear hemisphere  (-Z)
+
+#pragma kernel DualFisheyeToEquirect
+
+Texture2D _SrcDualFisheye;
+SamplerState sampler_SrcDualFisheye;
+RWTexture2D<float4> _DstEquirect;
+
+uint2 _SrcSize;
+uint2 _DstSize;
+float _FovDeg;
+float _BackFlipX;
+float _SourceFlipX;
+float _SourceFlipY;
+float _YawOffsetDeg;
+float _EnableImuStabilization;
+float _StabilizePitchDeg;
+float _StabilizeYawDeg;
+float _StabilizeRollDeg;
+
+#define PI 3.14159265358979323846
+
+float3 RotateX(float3 p, float a)
+{
+    float s = sin(a);
+    float c = cos(a);
+    return float3(p.x, p.y * c - p.z * s, p.y * s + p.z * c);
+}
+
+float3 RotateY(float3 p, float a)
+{
+    float s = sin(a);
+    float c = cos(a);
+    return float3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
+}
+
+float3 RotateZ(float3 p, float a)
+{
+    float s = sin(a);
+    float c = cos(a);
+    return float3(p.x * c - p.y * s, p.x * s + p.y * c, p.z);
+}
+
+[numthreads(8, 8, 1)]
+void DualFisheyeToEquirect(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _DstSize.x || id.y >= _DstSize.y)
+    {
+        return;
+    }
+
+    float u = (float(id.x) + 0.5) / float(_DstSize.x);
+    float v = (float(id.y) + 0.5) / float(_DstSize.y);
+    float lon = u * 2.0 * PI - PI + radians(_YawOffsetDeg);
+    float lat = PI * 0.5 - v * PI;
+
+    float cosLat = cos(lat);
+    float dx = cosLat * sin(lon);
+    float dy = sin(lat);
+    float dz = cosLat * cos(lon);
+
+    if (_EnableImuStabilization > 0.5)
+    {
+        float3 stabilizedDir = float3(dx, dy, dz);
+        stabilizedDir = RotateY(stabilizedDir, radians(_StabilizeYawDeg));
+        stabilizedDir = RotateX(stabilizedDir, radians(_StabilizePitchDeg));
+        stabilizedDir = RotateZ(stabilizedDir, radians(_StabilizeRollDeg));
+        dx = stabilizedDir.x;
+        dy = stabilizedDir.y;
+        dz = stabilizedDir.z;
+    }
+
+    // Front lens optical axis: +Z.
+    float xF = dx;
+    float yF = dy;
+    float zF = dz;
+
+    // Rear lens optical axis: -Z. Some camera SDK outputs need the rear lens X flipped.
+    float xB = lerp(dx, -dx, _BackFlipX);
+    float yB = dy;
+    float zB = -dz;
+
+    float halfFov = radians(_FovDeg) * 0.5;
+
+    float thetaF = acos(clamp(zF, -1.0, 1.0));
+    float thetaB = acos(clamp(zB, -1.0, 1.0));
+    float rF = thetaF / halfFov;
+    float rB = thetaB / halfFov;
+
+    float psiF = atan2(yF, xF + 1e-9);
+    float psiB = atan2(yB, xB + 1e-9);
+
+    float radius = float(_SrcSize.y) * 0.5;
+    float2 centerF = float2(float(_SrcSize.x) * 0.25, float(_SrcSize.y) * 0.5);
+    float2 centerB = float2(float(_SrcSize.x) * 0.75, float(_SrcSize.y) * 0.5);
+
+    float2 offF = float2(rF * cos(psiF), -rF * sin(psiF)) * radius;
+    float2 offB = float2(rB * cos(psiB), -rB * sin(psiB)) * radius;
+
+    float2 uvF = (centerF + offF) / float2(_SrcSize);
+    float2 uvB = (centerB + offB) / float2(_SrcSize);
+
+    if (_SourceFlipX > 0.5)
+    {
+        uvF.x = 1.0 - uvF.x;
+        uvB.x = 1.0 - uvB.x;
+    }
+
+    if (_SourceFlipY > 0.5)
+    {
+        uvF.y = 1.0 - uvF.y;
+        uvB.y = 1.0 - uvB.y;
+    }
+
+    float3 colF = _SrcDualFisheye.SampleLevel(sampler_SrcDualFisheye, uvF, 0).rgb;
+    float3 colB = _SrcDualFisheye.SampleLevel(sampler_SrcDualFisheye, uvB, 0).rgb;
+
+    // Blend the overlap region. The lens center has full weight, the FOV edge has zero.
+    float wF = saturate(1.0 - thetaF / halfFov);
+    float wB = saturate(1.0 - thetaB / halfFov);
+    float totalW = wF + wB;
+
+    float3 color = (totalW > 1e-6)
+        ? (colF * wF + colB * wB) / totalW
+        : float3(0.0, 0.0, 0.0);
+
+    _DstEquirect[id.xy] = float4(color, 1.0);
+}

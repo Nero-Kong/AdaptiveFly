@@ -1,0 +1,166 @@
+// Crest Water System
+// Copyright © 2024 Wave Harmonic. All rights reserved.
+
+// Soft shadow term is red, hard shadow term is green.
+
+#pragma exclude_renderers glcore gles3
+
+#pragma kernel CrestUpdateShadowsBRP _BRP
+#pragma kernel CrestUpdateShadowsHRP _HRP
+#pragma kernel CrestUpdateShadowsURP _URP
+
+// Both BIRP.
+#pragma multi_compile __ SHADOWS_SPLIT_SPHERES
+#pragma multi_compile __ SHADOWS_SINGLE_CASCADE
+
+// Cascade macros expect this to be available.
+#define g_Crest_CascadeShadowSource _Crest_Source
+Texture2DArray _Crest_Source;
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Utility/RP/Compute.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Utility/RP/Shadows.hlsl"
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Keywords.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Macros.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Constants.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Globals.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/InputsDriven.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Helpers.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Cascade.hlsl"
+
+// Noise functions used for jitter.
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Utility/Noise/Noise.hlsl"
+
+
+// JitterDiameterSoft, JitterDiameterHard, CurrentFrameWeightSoft, CurrentFrameWeightHard
+float4   _Crest_JitterDiameters_CurrentFrameWeights;
+float    _Crest_SimDeltaTime;
+float4x4 _Crest_MainCameraProjectionMatrix;
+
+bool   _Crest_SampleColorMap;
+float3 _Crest_Absorption;
+float3 _Crest_Scattering;
+
+RWTexture2DArray<m_Float2> _Crest_Target;
+
+
+m_CrestNameSpace
+
+half ComputeShadow(const float4 i_positionWS, const float i_jitterDiameter, const half i_terrainHeight, const uint i_LodIndex)
+{
+    float4 positionWS = i_positionWS;
+    bool noShadows = false;
+
+    if (i_jitterDiameter > 0.0)
+    {
+        // Add jitter.
+        positionWS.xz += i_jitterDiameter * (hash33(uint3(abs(positionWS.xz * 10.0), _Time.y * 120.0)) - 0.5).xy;
+
+        // Shadow Bleeding.
+        // If we are not within a terrain, then check for shadow bleeding.
+        if (i_positionWS.y > i_terrainHeight)
+        {
+            // WorldToSafeUV
+            half terrainHeight = Cascade::MakeDepth(i_LodIndex).SampleSceneHeight(positionWS.xz);
+
+            // If our current position is below the jittered terrain height, then we have landed within a terrain and
+            // we do not want to sample those shadows.
+            if (i_positionWS.y < terrainHeight)
+            {
+                // Return no shadows.
+                noShadows = true;
+            }
+        }
+    }
+
+    return noShadows ? 1.0 : Utility::SampleShadows(positionWS);
+}
+
+void UpdateShadows(const uint3 id)
+{
+    const uint slice0 = id.z;
+    const Cascade cascade = Cascade::MakeShadow(slice0);
+    const float2 worldPosXZ = cascade.IDToWorld(id.xy);
+
+    float4 positionWS = 1.0;
+    positionWS.xz = worldPosXZ;
+    positionWS.y = g_Crest_WaterCenter.y;
+
+    // Shadow from last frame. Manually implement black border.
+    const uint sliceIndexSource = ComputeSlice(slice0, g_Crest_LodChange, g_Crest_LodCount - 1);
+    half2 shadow = Cascade::MakeShadowSource(sliceIndexSource).SampleShadowOverflow(positionWS.xz, 1.0);
+
+    // Add displacement so shorelines do not receive shadows incorrectly.
+    positionWS.xyz += Cascade::MakeAnimatedWaves(slice0).SampleDisplacement(positionWS.xz);
+
+    // This was calculated in vertex but we have to sample sea level offset in fragment.
+    float4 mainCameraCoordinates = mul(_Crest_MainCameraProjectionMatrix, positionWS);
+
+    // Check if the current sample is visible in the main camera (and therefore the shadow map can be sampled). This is
+    // required as the shadow buffer is world aligned and surrounds viewer.
+    float3 projected = mainCameraCoordinates.xyz / mainCameraCoordinates.w;
+    if (projected.z < 1.0 && projected.z > 0.0 && abs(projected.x) < 1.0 && abs(projected.y) < 1.0)
+    {
+        half2 shadowThisFrame = 1.0;
+
+#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+        positionWS.xyz -= _WorldSpaceCameraPos.xyz;
+#endif
+
+        half terrainHeight = Cascade::MakeDepth(slice0).SampleSceneHeight(positionWS.xz);
+
+        half softJitter = _Crest_JitterDiameters_CurrentFrameWeights[CREST_SHADOW_INDEX_SOFT];
+
+        if (_Crest_SampleColorMap)
+        {
+            half3 absorption = _Crest_Absorption;
+            half3 scattering = _Crest_Scattering;
+
+#if d_Crest_AbsorptionLod
+            if (g_Crest_SampleAbsorptionSimulation)
+            {
+                absorption = Cascade::MakeAbsorption(slice0).SampleAbsorption(positionWS.xz);
+            }
+#endif
+
+#if d_Crest_ScatteringLod
+            if (g_Crest_SampleScatteringSimulation)
+            {
+                scattering = Cascade::MakeScattering(slice0).SampleScattering(positionWS.xz);
+            }
+#endif
+
+            half3 extinction = absorption + scattering;
+            half factor = saturate(min(min(extinction.x, extinction.y), extinction.z) * g_Crest_DynamicSoftShadowsFactor);
+            softJitter = (1.0 - factor) * k_Crest_MaximumShadowJitter;
+        }
+
+        // Add soft shadowing data.
+        shadowThisFrame[CREST_SHADOW_INDEX_SOFT] = ComputeShadow
+        (
+            positionWS,
+            softJitter,
+            terrainHeight,
+            slice0
+        );
+
+        // Add hard shadowing data.
+        shadowThisFrame[CREST_SHADOW_INDEX_HARD] = ComputeShadow
+        (
+            positionWS,
+            _Crest_JitterDiameters_CurrentFrameWeights[CREST_SHADOW_INDEX_HARD],
+            terrainHeight,
+            slice0
+        );
+
+        shadowThisFrame = (half2)1.0 - saturate(shadowThisFrame + Utility::ComputeShadowFade(positionWS));
+
+        shadow = lerp(shadow, shadowThisFrame, _Crest_JitterDiameters_CurrentFrameWeights.zw * _Crest_SimDeltaTime * 60.0);
+    }
+
+    _Crest_Target[id] = m_Float2FromFloat2(shadow);
+}
+
+m_CrestNameSpaceEnd
+
+m_CrestKernelXRP(UpdateShadows)

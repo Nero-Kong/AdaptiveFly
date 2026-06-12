@@ -1,0 +1,53 @@
+// Crest Water System
+// Copyright © 2024 Wave Harmonic. All rights reserved.
+
+#pragma exclude_renderers glcore gles3
+
+#pragma kernel CrestWaterLineBRP _BRP
+#pragma kernel CrestWaterLineHRP _HRP
+#pragma kernel CrestWaterLineURP _URP
+
+// Not every RP handles this. HDRP seems to.
+#pragma multi_compile _ STEREO_INSTANCING_ON STEREO_MULTIVIEW_ON
+
+#pragma multi_compile_local _ d_KeepValue
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Utility/RP/Compute.hlsl"
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Macros.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Constants.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Globals.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Cascade.hlsl"
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Surface/Data.hlsl"
+
+RW_TEXTURE2D_X(float, _Crest_WaterMaskTexture);
+
+m_CrestNameSpace
+
+void WaterLine(const uint3 id)
+{
+    UNITY_XR_ASSIGN_VIEW_INDEX(id.z);
+
+#if d_KeepValue
+    // Prevent rendering inside of portals.
+    if (_Crest_WaterMaskTexture[COORD_TEXTURE2D_X(id.xy)] != 0)
+    {
+        return;
+    }
+#endif
+
+    float3 position = ComputeWorldSpacePosition(id.xy / _ScreenSize.xy, UNITY_NEAR_CLIP_VALUE, UNITY_MATRIX_I_VP);
+
+#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+    position.xyz += _WorldSpaceCameraPos.xyz;
+#endif
+
+    const float height = SampleWaterLineHeight(position.xz).x;
+
+    _Crest_WaterMaskTexture[COORD_TEXTURE2D_X(id.xy)] = position.y <= height ? -1 : 1;
+}
+
+m_CrestNameSpaceEnd
+
+m_CrestKernelXRP(WaterLine)

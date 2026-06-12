@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: c47c6200534474da18e1134965c102f3
+ComputeShaderImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Runtime/Shaders/Data/UpdateShadow.compute
+  uploadId: 891564

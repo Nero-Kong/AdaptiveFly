@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b676eddee169f491c8baaec18b951e3e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Samples~/Waterfall/Prefabs/Waterfall_Scene.prefab
+  uploadId: 891564

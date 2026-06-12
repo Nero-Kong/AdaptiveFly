@@ -1,0 +1,10 @@
+// Crest Water System
+// Copyright © 2024 Wave Harmonic. All rights reserved.
+
+// Merged into Query.compute.
+
+#pragma exclude_renderers glcore gles3
+
+#pragma kernel CrestExecute
+[numthreads(1, 1, 1)]
+void CrestExecute(uint3 id : SV_DispatchThreadID) { }

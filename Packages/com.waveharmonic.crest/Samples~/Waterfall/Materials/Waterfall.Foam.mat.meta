@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ae2ad1d19000449dd9d7a77cdd04e573
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Samples~/Waterfall/Materials/Waterfall.Foam.mat
+  uploadId: 891564

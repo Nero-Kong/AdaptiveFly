@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f9eca4b9660d6423d89353a4148e9191
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Runtime/Shaders/Meniscus/Meniscus.hlsl
+  uploadId: 891564

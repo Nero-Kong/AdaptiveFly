@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 93b38270a78f94e43bfbbe01ef2e351b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 300
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Runtime/Scripts/Data/Input/Probe/DepthProbe.HighDefinition.cs
+  uploadId: 891564

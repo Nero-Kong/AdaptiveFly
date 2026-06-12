@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: efa03f442951949c7bbfadb22765f653
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268614
+  packageName: Crest Water 5 (Oceans, Rivers, Lakes)
+  packageVersion: 5.8.2
+  assetPath: Packages/com.waveharmonic.crest/Runtime/Data/WaveSpectra/WavesSwell.asset
+  uploadId: 891564

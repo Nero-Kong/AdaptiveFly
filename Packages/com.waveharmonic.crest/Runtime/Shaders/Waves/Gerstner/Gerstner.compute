@@ -1,0 +1,128 @@
+// Crest Water System
+// Copyright © 2024 Wave Harmonic. All rights reserved.
+
+// Computes a set of patches of waves, one for each scale.
+
+#pragma exclude_renderers glcore gles3
+
+#pragma kernel CrestExecute
+
+#pragma multi_compile_local _ d_WavePairs
+
+#include "HLSLSupport.cginc"
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Macros.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Globals.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/InputsDriven.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Helpers.hlsl"
+
+static const uint k_CascadeCount = 16;
+static const uint k_CascadePackingCount = 4;
+
+uint  _Crest_FirstCascadeIndex;
+uint4 _Crest_StartIndices[k_CascadeCount / k_CascadePackingCount];
+
+float _Crest_TextureRes;
+
+struct GerstnerWaveComponent4
+{
+    float4 _TwoPiOverWavelength;
+    float4 _Amplitude;
+    float4 _WaveDirectionX;
+    float4 _WaveDirectionZ;
+    float4 _Omega;
+    float4 _Phase;
+    float4 _ChopAmplitude;
+
+    // Waves are generated in pairs, these values are for the second in the pair
+    float4 _Amplitude2;
+    float4 _ChopAmplitude2;
+    float4 _Phase2;
+};
+StructuredBuffer<GerstnerWaveComponent4> _Crest_GerstnerWaveData;
+
+RWTexture2DArray<float4> _Crest_WaveBuffer;
+
+m_CrestNameSpace
+
+void ComputeGerstner( float2 worldPosXZ, float worldSize, GerstnerWaveComponent4 data, inout float3 result )
+{
+    // direction
+    half4 Dx = data._WaveDirectionX;
+    half4 Dz = data._WaveDirectionZ;
+
+    // wave number
+    half4 k = data._TwoPiOverWavelength;
+
+    half4 kx = k * Dx;
+    half4 kz = k * Dz;
+
+    // spatial location
+    float4 x = kx * worldPosXZ.x + kz * worldPosXZ.y;
+
+    // Compute a pair of waves, travelling in opposite directions (see
+    // sign in front of data._Omega). This matches how FFT wave gen works
+    // and produces waves that have a time varying amplitude, resulting in
+    // a more dynamic surface appearance.
+    half4 resultx, resulty, resultz;
+    {
+        half4 angle = x + data._Phase - data._Omega * g_Crest_Time;
+
+        half4 sinangle, cosangle;
+        sincos( angle, sinangle, cosangle );
+
+        half4 disp = data._ChopAmplitude * sinangle;
+        resultx = disp * Dx;
+        resultz = disp * Dz;
+
+        resulty = data._Amplitude * cosangle;
+    }
+
+#if d_WavePairs
+    {
+        half4 angle = x + data._Phase2 + data._Omega * g_Crest_Time;
+
+        half4 sinangle, cosangle;
+        sincos( angle, sinangle, cosangle );
+
+        half4 disp = data._ChopAmplitude2 * sinangle;
+        resultx += disp * Dx;
+        resultz += disp * Dz;
+
+        resulty += data._Amplitude2 * cosangle;
+    }
+#endif
+
+    // sum the vector results
+    result.x += dot( resultx, 1.0 );
+    result.y += dot( resulty, 1.0 );
+    result.z += dot( resultz, 1.0 );
+}
+
+void Execute(uint3 id)
+{
+    const uint cascadeIndex0 = id.z + _Crest_FirstCascadeIndex;
+    const uint cascadeIndex1 = min(cascadeIndex0 + 1, k_CascadeCount - 1);
+    const float worldSize = 0.5f * (1 << cascadeIndex0);
+
+    // Each cascade lies on XZ plane and starts from the origin
+    const float texelWidth = worldSize / _Crest_TextureRes;
+    const float2 worldPosXZ = (id.xy + 0.5) * texelWidth;
+
+    float3 result = 0.0;
+
+    const uint startIndex = _Crest_StartIndices[cascadeIndex0 / k_CascadePackingCount][cascadeIndex0 % k_CascadePackingCount];
+    const uint endIndex = _Crest_StartIndices[(cascadeIndex1 / k_CascadePackingCount)][cascadeIndex1 % k_CascadePackingCount];
+
+    for (uint i = startIndex; i < endIndex; i++)
+    {
+        // Sum up waves from another buffer
+        ComputeGerstner( worldPosXZ, worldSize, _Crest_GerstnerWaveData[i], result );
+    }
+
+    _Crest_WaveBuffer[uint3(id.xy, cascadeIndex0)] = float4(result, 1.0);
+}
+
+m_CrestNameSpaceEnd
+
+m_CrestKernelDefault(Execute)

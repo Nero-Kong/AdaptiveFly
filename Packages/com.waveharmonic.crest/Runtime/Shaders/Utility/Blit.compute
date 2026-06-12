@@ -1,0 +1,36 @@
+// Crest Water System
+// Copyright © 2024 Wave Harmonic. All rights reserved.
+
+#pragma exclude_renderers glcore gles3
+
+#pragma kernel CrestAdd
+
+#pragma multi_compile_local d_Float1 d_Float2 d_Float3 d_Float4
+
+#if   d_Float1
+#define m_Type float
+#elif d_Float2
+#define m_Type float2
+#elif d_Float3
+#define m_Type float3
+#elif d_Float4
+#define m_Type float4
+#endif
+
+#include "HLSLSupport.cginc"
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Utility/Macros.hlsl"
+
+Texture2DArray<m_Type>   _Crest_Source;
+RWTexture2DArray<m_Type> _Crest_Target;
+
+m_UtilityNameSpace
+
+void Add(uint3 id)
+{
+    _Crest_Target[id] += _Crest_Source[id];
+}
+
+m_UtilityNameSpaceEnd
+
+m_UtilityKernelDefault(Add)

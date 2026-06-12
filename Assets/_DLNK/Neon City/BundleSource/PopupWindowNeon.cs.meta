@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 277c49cc466e40e408a3fe6994490d30
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315692
+  packageName: Neon City Bundle
+  packageVersion: 1.0
+  assetPath: Assets/_DLNK/Neon City/BundleSource/PopupWindowNeon.cs
+  uploadId: 744905

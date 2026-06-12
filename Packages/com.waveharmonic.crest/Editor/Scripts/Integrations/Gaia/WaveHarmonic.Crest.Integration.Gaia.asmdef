@@ -1,0 +1,37 @@
+{
+    "name": "WaveHarmonic.Crest.Integration.Gaia",
+    "rootNamespace": "",
+    "references": [
+        "GUID:532136e3ad79fba44b9e7d74f4e53abe",
+        "GUID:cc49c744ac0d6fa459f6fb20f0066991",
+        "GUID:7c347618730f5467f86a58f333ce21df",
+        "GUID:98db37baed0fc4b73a47a9d66f791aae",
+        "GUID:056ff2a5b2f124d468c6655552acdca5",
+        "GUID:d365b04c036e04304a59ef9aa90b3924"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_2022_3_OR_NEWER",
+        "GAIA_2023"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.wind",
+            "expression": "",
+            "define": "d_UnityModuleWind"
+        },
+        {
+            "name": "com.waveharmonic.crest.shallow-water",
+            "expression": "",
+            "define": "d_WaveHarmonic_Crest_ShallowWater"
+        }
+    ],
+    "noEngineReferences": false
+}

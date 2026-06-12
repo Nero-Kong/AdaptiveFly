@@ -1,0 +1,117 @@
+// Crest Water System
+// Copyright © 2024 Wave Harmonic. All rights reserved.
+
+#pragma exclude_renderers glcore gles3
+
+#pragma kernel CrestShapeCombineAnimatedWaves
+#pragma kernel CrestShapeCopyAnimatedWaves
+#pragma kernel CrestShapeCombineDynamicWaves d_CombineDynamicWaves
+
+#pragma multi_compile_local _ d_Combine
+#pragma multi_compile_local _ d_DynamicWaves
+#pragma multi_compile _ CREST_FLOW_ON_INTERNAL
+
+#if d_CombineDynamicWaves
+#define d_DynamicWaves 1
+#endif
+
+#include "HLSLSupport.cginc"
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Keywords.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Macros.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Constants.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Globals.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/InputsDriven.hlsl"
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Cascade.hlsl"
+
+#if d_Combine
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Utility/Filtering.hlsl"
+#endif
+
+#if d_Crest_FlowLod
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Flow.hlsl"
+#endif
+
+float _Crest_HorizontalDisplace;
+float _Crest_DisplaceClamp;
+
+Texture2DArray _Crest_WaveBuffer;
+RWTexture2DArray<float4> _Crest_Target;
+
+m_CrestNameSpace
+
+void ShapeCombine(uint3 id)
+{
+    const uint slice0 = id.z;
+    const Cascade cascade = Cascade::MakeAnimatedWaves(slice0);
+
+    const float3 uv = cascade.IDToUV(id.xy);
+    const float2 positionWSXZ = cascade.UVToWorld(uv);
+
+    float3 result = 0.0;
+
+#if !d_CombineDynamicWaves
+    // Sample in waves for this cascade.
+    {
+#if d_Crest_FlowLod
+        const Flow f = Flow::Make
+        (
+            Cascade::MakeFlow(slice0).SampleFlow(positionWSXZ),
+            g_Crest_Time,
+            max(3.0 * cascade._Texel, 1.0)
+        );
+
+        result += cascade.SampleAnimatedWavesOverflow(_Crest_WaveBuffer, positionWSXZ - f._Offset0 * f._Flow, 1.0).xyz * f._Weight0;
+        result += cascade.SampleAnimatedWavesOverflow(_Crest_WaveBuffer, positionWSXZ - f._Offset1 * f._Flow, 1.0).xyz * f._Weight1;
+#else
+        result += _Crest_WaveBuffer[id].xyz;
+#endif
+    }
+#endif
+
+    // Disabled for last LOD.
+#if d_Combine
+    {
+        const uint slice1 = slice0 + 1;
+        const Cascade cascade = Cascade::MakeAnimatedWaves(slice1);
+        // Sample the shape 1 texture at this world position.
+        const float3 uv = cascade.WorldToUV(positionWSXZ);
+        // Waves to combine down from the next lod up the chain.
+        result += Utility::SampleBilinear(_Crest_Target, uv.xy, slice1, cascade._Resolution);
+    }
+#endif
+
+#if d_DynamicWaves
+    {
+        // Convert dynamic wave sim to displacements.
+        result += Cascade::MakeDynamicWaves(slice0)
+            .SampleDynamicWavesDisplacement(positionWSXZ, _Crest_HorizontalDisplace, _Crest_DisplaceClamp);
+    }
+#endif
+
+    _Crest_Target[id] = float4(result, 0.0);
+}
+
+void ShapeCombineAnimatedWaves(uint3 id)
+{
+    id.z = _Crest_LodIndex;
+    ShapeCombine(id);
+}
+
+void ShapeCopyAnimatedWaves(uint3 id)
+{
+    ShapeCombine(id);
+}
+
+void ShapeCombineDynamicWaves(uint3 id)
+{
+    // We are combining from the target which matches the Animated Waves descriptor.
+    id.z = _Crest_LodIndex;
+    ShapeCombine(id);
+}
+
+m_CrestNameSpaceEnd
+
+m_CrestKernelDefault(ShapeCombineAnimatedWaves)
+m_CrestKernelDefault(ShapeCopyAnimatedWaves)
+m_CrestKernelDefault(ShapeCombineDynamicWaves)
