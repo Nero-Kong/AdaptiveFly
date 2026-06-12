@@ -51,6 +51,8 @@ public class HeadOffsetLocomotion : MonoBehaviour
     public Transform head;
     [Tooltip("Only use Camera.main as a fallback when head is left empty on purpose.")]
     public bool autoBindHeadFromMainCamera = false;
+    [Tooltip("Apply the computed locomotion to the target rig. Disable this when another system, such as a drone, consumes the command output directly.")]
+    public bool applyMotionToTarget = true;
 
     [Header("Planar Translation")]
     [Tooltip("Maximum planar speed in m/s.")]
@@ -406,13 +408,16 @@ public class HeadOffsetLocomotion : MonoBehaviour
         float verticalCommand = ComputeVerticalSpeed(headForwardLocal);
         debugVerticalCommand = verticalCommand;
 
-        Vector3 localVelocity = new Vector3(smoothedPlanarVelocityLocal.x, verticalCommand, smoothedPlanarVelocityLocal.z);
-        Vector3 worldVelocity = target.TransformDirection(localVelocity);
-        Vector3 newPos = target.position + worldVelocity * Time.deltaTime;
-        target.position = ClampPosition(newPos, positionLimits);
+        if (applyMotionToTarget)
+        {
+            Vector3 localVelocity = new Vector3(smoothedPlanarVelocityLocal.x, verticalCommand, smoothedPlanarVelocityLocal.z);
+            Vector3 worldVelocity = target.TransformDirection(localVelocity);
+            Vector3 newPos = target.position + worldVelocity * Time.deltaTime;
+            target.position = ClampPosition(newPos, positionLimits);
 
-        float yawDeg = yawRateRad * Mathf.Rad2Deg * Time.deltaTime;
-        target.Rotate(Vector3.up, yawDeg, Space.World);
+            float yawDeg = yawRateRad * Mathf.Rad2Deg * Time.deltaTime;
+            target.Rotate(Vector3.up, yawDeg, Space.World);
+        }
 
         RecordBayesDataSampleIfNeeded();
     }

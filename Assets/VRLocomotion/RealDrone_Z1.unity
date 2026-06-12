@@ -686,6 +686,9 @@ GameObject:
   - component: {fileID: 958182779}
   - component: {fileID: 958182778}
   - component: {fileID: 958182777}
+  - component: {fileID: 958182780}
+  - component: {fileID: 958182781}
+  - component: {fileID: 958182782}
   m_Layer: 0
   m_Name: XR Origin (VR)
   m_TagString: Untagged
@@ -724,6 +727,133 @@ MonoBehaviour:
   m_CameraFloorOffsetObject: {fileID: 86083218}
   m_RequestedTrackingOriginMode: 0
   m_CameraYOffset: 1.1176
+--- !u!114 &958182780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958182776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb604017db5339c4bb3819723ddaa646, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeadOffsetLocomotion
+  target: {fileID: 958182779}
+  head: {fileID: 386116642}
+  autoBindHeadFromMainCamera: 0
+  applyMotionToTarget: 0
+  horizontalSpeed: 1
+  planarDeadZone: 0.003
+  planarMaxOffset: 0.025
+  planarResponseExponent: 0.55
+  headDirectionBlend: 0
+  invertYawDirection: 0
+  planarSmoothing: 10
+  planarReferenceMode: 0
+  bodyAnchorProvider: {fileID: 958182781}
+  autoCreateBodyAnchorProvider: 0
+  fallbackToInitialHeadReference: 1
+  normalizePlanarOffsetByBodyYaw: 1
+  useBodyRelativeHeadYaw: 0
+  recenterHeadYawOnBodyAnchorReacquired: 1
+  bodyAnchorReacquireRecenterDelay: 0.5
+  logBodyAnchorStatus: 1
+  bodyAnchorStatusLogInterval: 2
+  adaptiveCalibrationEnabled: 0
+  autoCalibrateNeutralOnStart: 0
+  fullCalibrationKey: 118
+  neutralCalibrationDuration: 2
+  directionCalibrationDuration: 1.5
+  freezeMovementDuringCalibration: 1
+  swayDeadZoneMultiplier: 3
+  minAdaptiveDeadZone: 0.002
+  maxAdaptiveDeadZone: 0.02
+  minAdaptiveMaxOffset: 0.012
+  maxAdaptiveMaxOffset: 0.16
+  comfortableMaxOffsetScale: 0.85
+  onlineMaxOffsetLearningEnabled: 0
+  onlineMaxOffsetWindowSamples: 240
+  onlineMaxOffsetSampleInterval: 0.1
+  onlineMaxOffsetUpdateInterval: 0.5
+  onlineMaxOffsetPercentile: 0.9
+  onlineMaxOffsetMinSamplesPerDirection: 8
+  onlineMaxOffsetDeadZoneMultiplier: 1.15
+  onlineMaxOffsetMinProjection: 0.002
+  onlineMaxOffsetMoreSensitiveRate: 4
+  onlineMaxOffsetLessSensitiveRate: 0.8
+  onlineMaxOffsetPauseAfterRecenter: 0.75
+  onlineDeadZoneLearningEnabled: 1
+  onlineDeadZonePercentile: 0.9
+  onlineDeadZoneSafetyScale: 1.25
+  onlineDeadZoneMinSamples: 12
+  onlineDeadZoneMaxPlanarCommandForSample: 0.08
+  onlineDeadZoneSampleGateMultiplier: 2.5
+  onlineDeadZoneAdaptRate: 1.5
+  bayesDataLoggingEnabled: 1
+  bayesDataLoggingInterval: 0.033333335
+  bayesDataFolderName: BayesData
+  bayesDataFlushInterval: 2
+  orientationMode: 0
+  verticalSpeed: 0.5
+  yawSpeed: 60
+  staticYawThresholdDeg: 30
+  staticYawSpeedDeg: 60
+  staticPitchUpThresholdDeg: 30
+  staticPitchDownThresholdDeg: 30
+  staticPitchUpSpeed: 5
+  staticPitchDownSpeed: 5
+  coupledYawMaxSpeedDeg: 200
+  coupledYawGain: 4
+  coupledPitchMaxSpeed: 5
+  coupledPitchReferenceDeg: 30
+  positionLimits: {x: 2000, y: 2000, z: 2000}
+  recenterKey: 99
+  resetTargetPoseOnRecenter: 1
+--- !u!114 &958182781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958182776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ece9c708f81748f19e105b6d5bf64b12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BodyAnchorProvider
+  source: 4
+  target: {fileID: 958182779}
+  externalAnchor: {fileID: 0}
+  xrOrigin: {fileID: 958182778}
+  controllerTrackingSpace: {fileID: 86083219}
+  requireControllerTrackedPosition: 1
+  requireControllerTrackedRotation: 1
+--- !u!114 &958182782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958182776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e17461ed2c942cfab5f37dc1e3f2a49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AdaptiveFlyDroneCommandBroadcaster
+  locomotion: {fileID: 958182780}
+  autoFindLocomotion: 1
+  broadcastEnabled: 1
+  destinationHost: 127.0.0.1
+  destinationPort: 14560
+  allowBroadcast: 0
+  sendRateHz: 30
+  sendZeroCommandOnDisable: 1
+  maxPlanarSpeedMps: 1
+  maxVerticalSpeedMps: 0.5
+  maxYawRateDegPerSecond: 60
+  logPackets: 1
+  logEveryPackets: 30
 --- !u!4 &958182779
 Transform:
   m_ObjectHideFlags: 0
