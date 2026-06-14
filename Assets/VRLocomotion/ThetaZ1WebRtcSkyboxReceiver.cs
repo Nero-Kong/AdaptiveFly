@@ -137,6 +137,7 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     private RenderTexture _stabilizedTexture;
     private Material _skyDomeMaterial;
     private Material _legacySkyboxMaterial;
+    private string _remoteVideoMid = "video0";
     private bool _canAddRemoteCandidates;
     private bool _hasEverConnected;
     private bool _renegotiateRequested;
@@ -606,6 +607,7 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         _lastOfferReceivedTime = Time.realtimeSinceStartup;
         _renegotiateRequested = false;
         ClosePeerConnection();
+        _remoteVideoMid = ExtractFirstMid(sdp) ?? "video0";
         CreatePeerConnection();
 
         status = "Applying offer";
@@ -624,9 +626,6 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
             Debug.LogError("[THETA Z1 WebRTC] SetRemoteDescription failed: " + remoteOp.Error.message, this);
             yield break;
         }
-
-        _canAddRemoteCandidates = true;
-        DrainPendingRemoteCandidates();
 
         var answerOp = _peerConnection.CreateAnswer();
         yield return answerOp;
@@ -653,6 +652,9 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
             Debug.LogError("[THETA Z1 WebRTC] SetLocalDescription failed: " + localOp.Error.message, this);
             yield break;
         }
+
+        _canAddRemoteCandidates = true;
+        DrainPendingRemoteCandidates();
 
         SendSignal(new SignalMessage
         {
@@ -791,7 +793,7 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         var init = new RTCIceCandidateInit
         {
             candidate = message.candidate,
-            sdpMid = message.sdpMid,
+            sdpMid = string.IsNullOrWhiteSpace(message.sdpMid) ? _remoteVideoMid : message.sdpMid,
             sdpMLineIndex = message.sdpMLineIndex
         };
 
@@ -1612,6 +1614,26 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         }
 
         return parts.Count > 0 ? string.Join(" | ", parts) : "(no video lines)";
+    }
+
+    private static string ExtractFirstMid(string sdp)
+    {
+        if (string.IsNullOrWhiteSpace(sdp))
+        {
+            return null;
+        }
+
+        string[] lines = sdp.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (string line in lines)
+        {
+            const string prefix = "a=mid:";
+            if (line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return line.Substring(prefix.Length).Trim();
+            }
+        }
+
+        return null;
     }
 
     private static string ShortCandidate(string candidate)

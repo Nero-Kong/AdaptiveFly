@@ -263,10 +263,7 @@ public static class HeavyStationXROriginImporter
             listener.enabled = false;
         }
 
-        foreach (CameraOrbit orbit in cameraRoot.GetComponentsInChildren<CameraOrbit>(true))
-        {
-            orbit.enabled = false;
-        }
+        DisableBehavioursByTypeName(cameraRoot, "CameraOrbit");
     }
 
     private static void DisableLegacySceneControllers(Scene scene)
@@ -276,14 +273,27 @@ public static class HeavyStationXROriginImporter
 
         foreach (GameObject root in roots)
         {
-            foreach (CameraSwitchKey cameraSwitch in root.GetComponentsInChildren<CameraSwitchKey>(true))
-            {
-                cameraSwitch.enabled = false;
-            }
+            DisableBehavioursByTypeName(root, "CameraSwitchKey");
 
             foreach (StandaloneInputModule standaloneInput in root.GetComponentsInChildren<StandaloneInputModule>(true))
             {
                 standaloneInput.enabled = false;
+            }
+        }
+    }
+
+    private static void DisableBehavioursByTypeName(GameObject root, string typeName)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        foreach (MonoBehaviour behaviour in root.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (behaviour != null && behaviour.GetType().Name == typeName)
+            {
+                behaviour.enabled = false;
             }
         }
     }

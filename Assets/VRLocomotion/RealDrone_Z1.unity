@@ -689,6 +689,7 @@ GameObject:
   - component: {fileID: 958182780}
   - component: {fileID: 958182781}
   - component: {fileID: 958182782}
+  - component: {fileID: 958182783}
   m_Layer: 0
   m_Name: XR Origin (VR)
   m_TagString: Untagged
@@ -727,6 +728,22 @@ MonoBehaviour:
   m_CameraFloorOffsetObject: {fileID: 86083218}
   m_RequestedTrackingOriginMode: 0
   m_CameraYOffset: 1.1176
+--- !u!4 &958182779
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958182776}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 86083219}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &958182780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -744,7 +761,7 @@ MonoBehaviour:
   autoBindHeadFromMainCamera: 0
   applyMotionToTarget: 0
   horizontalSpeed: 1
-  planarDeadZone: 0.003
+  planarDeadZone: 0.03
   planarMaxOffset: 0.025
   planarResponseExponent: 0.55
   headDirectionBlend: 0
@@ -844,7 +861,7 @@ MonoBehaviour:
   locomotion: {fileID: 958182780}
   autoFindLocomotion: 1
   broadcastEnabled: 1
-  destinationHost: 127.0.0.1
+  destinationHost: 192.168.88.51
   destinationPort: 14560
   allowBroadcast: 0
   sendRateHz: 30
@@ -854,22 +871,33 @@ MonoBehaviour:
   maxYawRateDegPerSecond: 60
   logPackets: 1
   logEveryPackets: 30
---- !u!4 &958182779
-Transform:
+--- !u!114 &958182783
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 958182776}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 86083219}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1e30c3c3b2e4f4ab96f5f72f047af41, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::AdaptiveFlyArmCommandBroadcaster
+  controlTarget: {fileID: 386116642}
+  autoBindControlTargetFromMainCamera: 1
+  armOrigin: {fileID: 958182779}
+  useOwnTransformAsArmOrigin: 1
+  broadcastEnabled: 1
+  destinationHost: 192.168.88.51
+  destinationPort: 14561
+  allowBroadcast: 0
+  sendRateHz: 30
+  sendHoldCommandOnDisable: 1
+  maxRelativePositionMeters: 0.5
+  maxLinearSpeedMps: 0.5
+  maxAngularSpeedRadPerSecond: 1
+  logPackets: 1
+  logEveryPackets: 30
 --- !u!1 &1066014212
 GameObject:
   m_ObjectHideFlags: 0
@@ -1295,7 +1323,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a81481c21e9842b6a732a2148abb8917, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  signalingUrl: ws://192.168.68.50:8765
+  signalingUrl: ws://127.0.0.1:8765
   connectOnStart: 1
   autoReconnect: 1
   reconnectDelaySeconds: 1.5
@@ -1306,15 +1334,27 @@ MonoBehaviour:
   autoSkyDomeRadius: 50
   invertSphereForInnerViewing: 1
   alsoSetRenderSettingsSkybox: 1
+  disableLegacyProjectionComponents: 1
   yawOffsetDegrees: 0
   noSignalColor: {r: 0.02, g: 0.025, b: 0.035, a: 1}
+  enableImuStabilization: 1
+  imuStabilizer: {fileID: 0}
+  autoAddImuStabilizer: 1
+  stabilizeTextureBeforeDisplay: 1
+  equirectStabilizeCompute: {fileID: 0}
+  autoLoadEquirectStabilizeCompute: 1
   drawDebugOverlay: 1
   drawTexturePreview: 1
   statsPollIntervalSeconds: 1
   sendStatsToSignaling: 1
+  drawStreamControls: 1
   status: Idle
   peerState: none
   iceState: none
+  currentNativePreset: unknown
+  requestedNativePreset: z1-4k
+  senderStatus: idle
+  decoderImplementation: unknown
   sourceWidth: 0
   sourceHeight: 0
   receivedBitrateMbps: 0
@@ -1326,6 +1366,7 @@ MonoBehaviour:
   networkJitterMs: 0
   rttMs: 0
   reconnectAttempts: 0
+  imuCompensationEulerDeg: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

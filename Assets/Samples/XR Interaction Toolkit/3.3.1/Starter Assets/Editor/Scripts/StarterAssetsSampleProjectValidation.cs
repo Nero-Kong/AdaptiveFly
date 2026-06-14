@@ -1,3 +1,4 @@
+#if ADAPTIVEFLY_ENABLE_XRI_SAMPLE_VALIDATION
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -197,3 +198,4 @@ namespace UnityEditor.XR.Interaction.Toolkit.Samples
 #endif
     }
 }
+#endif
