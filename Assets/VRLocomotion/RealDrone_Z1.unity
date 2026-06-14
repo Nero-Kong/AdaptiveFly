@@ -853,7 +853,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 958182776}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e17461ed2c942cfab5f37dc1e3f2a49, type: 3}
   m_Name: 
@@ -883,12 +883,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1e30c3c3b2e4f4ab96f5f72f047af41, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::AdaptiveFlyArmCommandBroadcaster
+  commandMode: 1
+  locomotion: {fileID: 958182780}
+  autoFindLocomotion: 1
   controlTarget: {fileID: 386116642}
   autoBindControlTargetFromMainCamera: 1
   armOrigin: {fileID: 958182779}
   useOwnTransformAsArmOrigin: 1
   broadcastEnabled: 1
-  destinationHost: 192.168.88.51
+  destinationHost: 192.168.88.52
   destinationPort: 14561
   allowBroadcast: 0
   sendRateHz: 30

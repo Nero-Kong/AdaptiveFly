@@ -8,7 +8,18 @@ using UnityEngine;
 [DefaultExecutionOrder(121)]
 public class AdaptiveFlyArmCommandBroadcaster : MonoBehaviour
 {
+    public enum ArmCommandMode
+    {
+        RelativePose,
+        FourDofTwistFromLocomotion
+    }
+
+    [Header("Mode")]
+    public ArmCommandMode commandMode = ArmCommandMode.FourDofTwistFromLocomotion;
+
     [Header("Source")]
+    public HeadOffsetLocomotion locomotion;
+    public bool autoFindLocomotion = true;
     public Transform controlTarget;
     public bool autoBindControlTargetFromMainCamera = true;
     public Transform armOrigin;
@@ -91,6 +102,15 @@ public class AdaptiveFlyArmCommandBroadcaster : MonoBehaviour
 
     private void ResolveSourceTransforms()
     {
+        if (locomotion == null && autoFindLocomotion)
+        {
+            locomotion = GetComponent<HeadOffsetLocomotion>();
+            if (locomotion == null)
+            {
+                locomotion = FindAnyObjectByType<HeadOffsetLocomotion>();
+            }
+        }
+
         if (controlTarget == null && autoBindControlTargetFromMainCamera && Camera.main != null)
         {
             controlTarget = Camera.main.transform;
@@ -164,6 +184,31 @@ public class AdaptiveFlyArmCommandBroadcaster : MonoBehaviour
             return;
         }
 
+        string logDetail = commandMode == ArmCommandMode.FourDofTwistFromLocomotion
+            ? BuildFourDofTwistJson(forceHold)
+            : BuildRelativePoseJson(forceHold);
+
+        try
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(jsonBuilder.ToString());
+            udpClient.Send(bytes, bytes.Length, remoteEndPoint);
+
+            if (logPackets && logEveryPackets > 0 && sequence % logEveryPackets == 0)
+            {
+                Debug.Log(
+                    $"{nameof(AdaptiveFlyArmCommandBroadcaster)} sent seq={sequence} " +
+                    $"{logDetail} to {destinationHost}:{destinationPort}.",
+                    this);
+            }
+        }
+        catch (Exception ex)
+        {
+            WarnThrottled($"AdaptiveFly arm command UDP send failed: {ex.Message}");
+        }
+    }
+
+    private string BuildRelativePoseJson(bool forceHold)
+    {
         bool hasSource = controlTarget != null && armOrigin != null;
         bool valid = hasSource && !forceHold;
         Vector3 relativePosition = Vector3.zero;
@@ -206,24 +251,69 @@ public class AdaptiveFlyArmCommandBroadcaster : MonoBehaviour
             relativeLinearVelocity,
             relativeAngularVelocity);
 
-        try
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(jsonBuilder.ToString());
-            udpClient.Send(bytes, bytes.Length, remoteEndPoint);
+        return $"pose=({relativePosition.x:0.000},{relativePosition.y:0.000},{relativePosition.z:0.000})m";
+    }
 
-            if (logPackets && logEveryPackets > 0 && sequence % logEveryPackets == 0)
-            {
-                Debug.Log(
-                    $"{nameof(AdaptiveFlyArmCommandBroadcaster)} sent seq={sequence} " +
-                    $"pos=({relativePosition.x:0.000},{relativePosition.y:0.000},{relativePosition.z:0.000})m " +
-                    $"to {destinationHost}:{destinationPort}.",
-                    this);
-            }
-        }
-        catch (Exception ex)
+    private string BuildFourDofTwistJson(bool forceHold)
+    {
+        bool hasLocomotion = locomotion != null;
+        bool valid = hasLocomotion && !forceHold;
+        Vector3 localVelocity = Vector3.zero;
+        Vector2 planarCommand = Vector2.zero;
+        float upMps = 0f;
+        float yawDegPerSecond = 0f;
+        bool hasBodyAnchor = false;
+        bool usingHmdFallback = false;
+
+        if (valid)
         {
-            WarnThrottled($"AdaptiveFly arm command UDP send failed: {ex.Message}");
+            localVelocity = locomotion.DebugSmoothedPlanarVelocityLocal;
+            planarCommand = locomotion.DebugPlanarCommand;
+            upMps = locomotion.DebugVerticalCommand;
+            yawDegPerSecond = locomotion.DebugYawRateDegPerSecond;
+            hasBodyAnchor = locomotion.DebugHasBodyAnchor;
+            usingHmdFallback = locomotion.DebugUsingInitialHeadReferenceFallback;
         }
+
+        float rightMps = Clamp(localVelocity.x, maxLinearSpeedMps);
+        float forwardMps = Clamp(localVelocity.z, maxLinearSpeedMps);
+        upMps = Clamp(upMps, maxLinearSpeedMps);
+        float yawRadPerSecond = Clamp(-yawDegPerSecond * Mathf.Deg2Rad, maxAngularSpeedRadPerSecond);
+
+        float linearLimit = Mathf.Max(1e-4f, Mathf.Abs(maxLinearSpeedMps));
+        float angularLimit = Mathf.Max(1e-4f, Mathf.Abs(maxAngularSpeedRadPerSecond));
+
+        sequence++;
+        jsonBuilder.Clear();
+        jsonBuilder.Append('{');
+        AppendJson("type", "arm_ee_twist_relative", comma: false);
+        AppendJson("version", ProtocolVersion);
+        AppendJson("seq", sequence);
+        AppendJson("time_s", Time.realtimeSinceStartupAsDouble);
+        AppendJson("frame", "arm_origin_unity_relative");
+        AppendJson("relative_to", "arm_origin");
+        AppendJson("control_mode", "four_dof_twist");
+        AppendJson("dof", 4);
+        AppendJson("valid", valid);
+        AppendJson("has_locomotion", hasLocomotion);
+        AppendJson("has_body_anchor", hasBodyAnchor);
+        AppendJson("using_hmd_fallback", usingHmdFallback);
+        AppendJson("vx_unity_mps", rightMps);
+        AppendJson("vy_unity_mps", upMps);
+        AppendJson("vz_unity_mps", forwardMps);
+        AppendJson("wx_unity_rad_s", 0f);
+        AppendJson("wy_unity_rad_s", yawRadPerSecond);
+        AppendJson("wz_unity_rad_s", 0f);
+        AppendJson("cmd_right", Mathf.Clamp(rightMps / linearLimit, -1f, 1f));
+        AppendJson("cmd_forward", Mathf.Clamp(forwardMps / linearLimit, -1f, 1f));
+        AppendJson("cmd_up", Mathf.Clamp(upMps / linearLimit, -1f, 1f));
+        AppendJson("cmd_yaw", Mathf.Clamp(yawRadPerSecond / angularLimit, -1f, 1f));
+        AppendJson("planar_input_x", planarCommand.x);
+        AppendJson("planar_input_z", planarCommand.y);
+        AppendJson("input_yaw_deg_s", yawDegPerSecond);
+        jsonBuilder.Append('}');
+
+        return $"twist=(right {rightMps:0.000}, fwd {forwardMps:0.000}, up {upMps:0.000}, yaw {yawRadPerSecond:0.000}rad/s)";
     }
 
     private void BuildJson(
@@ -318,6 +408,12 @@ public class AdaptiveFlyArmCommandBroadcaster : MonoBehaviour
             Mathf.Clamp(value.x, -maxAbs, maxAbs),
             Mathf.Clamp(value.y, -maxAbs, maxAbs),
             Mathf.Clamp(value.z, -maxAbs, maxAbs));
+    }
+
+    private static float Clamp(float value, float maxAbs)
+    {
+        maxAbs = Mathf.Max(0f, maxAbs);
+        return Mathf.Clamp(value, -maxAbs, maxAbs);
     }
 
     private static bool IsFinite(float value)
