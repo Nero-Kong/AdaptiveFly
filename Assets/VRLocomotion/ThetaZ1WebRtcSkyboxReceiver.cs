@@ -1551,8 +1551,8 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         float x = rect.x + 10f;
         if (GUI.Button(new Rect(x, y, buttonWidth, buttonHeight), "Stable"))
         {
-            yawOffsetDegrees = 180f;
-            staticMountEulerDegrees = new Vector3(-90f, -90f, 0f);
+            yawOffsetDegrees = 0f;
+            staticMountEulerDegrees = new Vector3(0f, -90f, -90f);
             alsoSetRenderSettingsSkybox = false;
             enableImuStabilization = false;
             stabilizeTextureBeforeDisplay = false;
