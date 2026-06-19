@@ -1340,6 +1340,7 @@ MonoBehaviour:
   disableLegacyProjectionComponents: 1
   yawOffsetDegrees: 180
   staticMountEulerDegrees: {x: -90, y: 0, z: 0}
+  viewerForwardRollDegrees: 90
   noSignalColor: {r: 0.02, g: 0.025, b: 0.035, a: 1}
   enableImuStabilization: 0
   imuStabilizer: {fileID: 0}
