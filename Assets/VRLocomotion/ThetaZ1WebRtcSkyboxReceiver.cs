@@ -103,6 +103,24 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     public bool drawStreamControls = true;
 
     [Header("Runtime Mount Tuning")]
+    [Tooltip("Apply the default Z1 mount tuning values every time this receiver wakes up.")]
+    public bool applyMountTuningDefaultsOnAwake = true;
+
+    [Tooltip("Default yaw applied when Apply Mount Tuning Defaults On Awake or the Stable button is used.")]
+    public float defaultYawOffsetDegrees = 0f;
+
+    [Tooltip("Default static mount Euler applied when Apply Mount Tuning Defaults On Awake or the Stable button is used.")]
+    public Vector3 defaultStaticMountEulerDegrees = new Vector3(0f, -90f, -90f);
+
+    [Tooltip("Default legacy skybox setting applied with the Z1 mount defaults.")]
+    public bool defaultAlsoSetRenderSettingsSkybox = false;
+
+    [Tooltip("Default IMU horizon lock setting applied with the Z1 mount defaults.")]
+    public bool defaultEnableImuStabilization = false;
+
+    [Tooltip("Default texture stabilization setting applied with the Z1 mount defaults.")]
+    public bool defaultStabilizeTextureBeforeDisplay = false;
+
     [Tooltip("Show live Z1 mount/orientation controls in the Game view debug overlay.")]
     public bool drawMountTuningControls = true;
 
@@ -240,6 +258,11 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
 
     private void Awake()
     {
+        if (applyMountTuningDefaultsOnAwake)
+        {
+            ApplyMountTuningDefaults();
+        }
+
         EnsureSkyDome();
         DisableLegacyProjectionComponentsIfNeeded();
         EnsureImuStabilizer();
@@ -1551,11 +1574,7 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         float x = rect.x + 10f;
         if (GUI.Button(new Rect(x, y, buttonWidth, buttonHeight), "Stable"))
         {
-            yawOffsetDegrees = 0f;
-            staticMountEulerDegrees = new Vector3(0f, -90f, -90f);
-            alsoSetRenderSettingsSkybox = false;
-            enableImuStabilization = false;
-            stabilizeTextureBeforeDisplay = false;
+            ApplyMountTuningDefaults();
         }
 
         x += buttonWidth + 10f;
@@ -1607,6 +1626,23 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     {
         degrees = Mathf.Repeat(degrees + 180f, 360f) - 180f;
         return Mathf.Approximately(degrees, -180f) ? 180f : degrees;
+    }
+
+    private void ApplyMountTuningDefaults()
+    {
+        yawOffsetDegrees = NormalizeDegrees(defaultYawOffsetDegrees);
+        staticMountEulerDegrees = new Vector3(
+            NormalizeDegrees(defaultStaticMountEulerDegrees.x),
+            NormalizeDegrees(defaultStaticMountEulerDegrees.y),
+            NormalizeDegrees(defaultStaticMountEulerDegrees.z));
+        alsoSetRenderSettingsSkybox = defaultAlsoSetRenderSettingsSkybox;
+        enableImuStabilization = defaultEnableImuStabilization;
+        stabilizeTextureBeforeDisplay = defaultStabilizeTextureBeforeDisplay;
+
+        if (!enableImuStabilization)
+        {
+            imuCompensationEulerDeg = Vector3.zero;
+        }
     }
 
     private static void SetTextureIfPresent(Material material, int propertyId, Texture texture)

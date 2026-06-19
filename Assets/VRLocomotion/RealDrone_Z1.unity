@@ -1352,6 +1352,12 @@ MonoBehaviour:
   statsPollIntervalSeconds: 1
   sendStatsToSignaling: 1
   drawStreamControls: 1
+  applyMountTuningDefaultsOnAwake: 1
+  defaultYawOffsetDegrees: 0
+  defaultStaticMountEulerDegrees: {x: 0, y: -90, z: -90}
+  defaultAlsoSetRenderSettingsSkybox: 0
+  defaultEnableImuStabilization: 0
+  defaultStabilizeTextureBeforeDisplay: 0
   drawMountTuningControls: 1
   mountTuningStepDegrees: 5
   status: Idle

@@ -38,7 +38,7 @@ Current RealDrone_Z1 setup:
   - yaw_deg_s: yaw-rate command in degrees/second
   - cmd_forward/cmd_right/cmd_down/cmd_up/cmd_yaw: normalized -1..1 command values
   - valid/has_body_anchor/using_hmd_fallback: state flags
-- The THETA Z1 WebRTC receiver displays an already-stitched equirectangular panorama on the THETA Z1 Equirect Sky Dome mesh. RealDrone_Z1 keeps alsoSetRenderSettingsSkybox disabled so staticMountEulerDegrees affects the visible view instead of being bypassed by Unity's legacy panoramic skybox. Current default values: staticMountEulerDegrees = (0, -90, -90), yawOffsetDegrees = 0, with Z1 IMU horizon lock disabled. In Play mode, use the Game view Z1 Mount Tuning panel to adjust yawOffsetDegrees, staticMountEulerDegrees X/Y/Z, legacy skybox, IMU horizon lock, and texture stabilization live.
+- The THETA Z1 WebRTC receiver displays an already-stitched equirectangular panorama on the THETA Z1 Equirect Sky Dome mesh. RealDrone_Z1 keeps alsoSetRenderSettingsSkybox disabled so staticMountEulerDegrees affects the visible view instead of being bypassed by Unity's legacy panoramic skybox. Current default values are yawOffsetDegrees = 0 and staticMountEulerDegrees = (0, -90, -90), with Z1 IMU horizon lock disabled. RealDrone_Z1 applies these mount defaults in Awake, so Play mode starts from them even if the open scene still has stale editor values. In Play mode, use the Game view Z1 Mount Tuning panel to adjust yawOffsetDegrees, staticMountEulerDegrees X/Y/Z, legacy skybox, IMU horizon lock, and texture stabilization live.
 
 New machine setup checklist:
 1. Install Git and Git LFS.
