@@ -1338,7 +1338,7 @@ MonoBehaviour:
   invertSphereForInnerViewing: 1
   alsoSetRenderSettingsSkybox: 1
   disableLegacyProjectionComponents: 1
-  yawOffsetDegrees: -90
+  yawOffsetDegrees: 90
   staticMountEulerDegrees: {x: 0, y: 0, z: 0}
   noSignalColor: {r: 0.02, g: 0.025, b: 0.035, a: 1}
   enableImuStabilization: 1
