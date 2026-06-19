@@ -65,6 +65,9 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     [Tooltip("Fixed equirectangular mount correction in degrees. Use this when the Z1 is mounted sideways, e.g. one fisheye up and one fisheye down.")]
     public Vector3 staticMountEulerDegrees = Vector3.zero;
 
+    [Tooltip("Roll the panorama around the HMD/Main Camera forward axis in degrees. This matches rolling the Quest around the user's face-forward +Z axis.")]
+    public float viewerForwardRollDegrees = 0f;
+
     [Tooltip("Color shown before the first WebRTC video frame arrives.")]
     public Color noSignalColor = new Color(0.02f, 0.025f, 0.035f, 1f);
 
@@ -164,6 +167,7 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     private DelegateOnConnectionStateChange _onConnectionStateChange;
     private DelegateOnIceCandidate _onIceCandidate;
     private DelegateOnTrack _onTrack;
+    private Transform _viewerForwardTransform;
 
     private static readonly int BaseColorMapId = Shader.PropertyToID("_BaseColorMap");
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -1027,7 +1031,38 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         Quaternion staticYaw = Quaternion.Euler(0f, yawOffsetDegrees + stabilizationEuler.y, 0f);
         Quaternion staticMount = Quaternion.Euler(staticMountEulerDegrees);
         Quaternion rollPitch = Quaternion.Euler(stabilizationEuler.x, 0f, stabilizationEuler.z);
-        skyDomeRenderer.transform.localRotation = staticYaw * staticMount * rollPitch;
+        Quaternion baseLocalRotation = staticYaw * staticMount * rollPitch;
+        skyDomeRenderer.transform.localRotation = ApplyViewerForwardRoll(baseLocalRotation);
+    }
+
+    private Quaternion ApplyViewerForwardRoll(Quaternion baseLocalRotation)
+    {
+        if (Mathf.Abs(viewerForwardRollDegrees) < 0.001f || skyDomeRenderer == null)
+        {
+            return baseLocalRotation;
+        }
+
+        Transform domeTransform = skyDomeRenderer.transform;
+        Transform parent = domeTransform.parent;
+        Quaternion parentRotation = parent != null ? parent.rotation : Quaternion.identity;
+        Quaternion baseWorldRotation = parentRotation * baseLocalRotation;
+        Quaternion rolledWorldRotation = Quaternion.AngleAxis(viewerForwardRollDegrees, GetViewerForwardAxis()) * baseWorldRotation;
+        return Quaternion.Inverse(parentRotation) * rolledWorldRotation;
+    }
+
+    private Vector3 GetViewerForwardAxis()
+    {
+        if (_viewerForwardTransform == null)
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null)
+            {
+                _viewerForwardTransform = mainCamera.transform;
+            }
+        }
+
+        Vector3 forward = _viewerForwardTransform != null ? _viewerForwardTransform.forward : Vector3.forward;
+        return forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.forward;
     }
 
     private Texture GetDisplayTexture(Texture source)
