@@ -38,6 +38,7 @@ Current RealDrone_Z1 setup:
   - yaw_deg_s: yaw-rate command in degrees/second
   - cmd_forward/cmd_right/cmd_down/cmd_up/cmd_yaw: normalized -1..1 command values
   - valid/has_body_anchor/using_hmd_fallback: state flags
+- The THETA Z1 WebRTC receiver displays an already-stitched equirectangular panorama. RealDrone_Z1 is configured for a sideways Z1 mount with one fisheye up and one fisheye down by setting staticMountEulerDegrees = (-90, 0, 0). If sky/ground are inverted on the new physical mount, switch X to +90. If forward is not centered, tune yawOffsetDegrees.
 
 New machine setup checklist:
 1. Install Git and Git LFS.
@@ -50,7 +51,7 @@ New machine setup checklist:
 4. Let Unity restore packages from Packages/manifest.json.
 5. Use Meta Quest Link / OpenXR. Confirm Meta Horizon Link is the active OpenXR runtime for Quest 3.
 6. Open Assets/VRLocomotion/RealDrone_Z1.unity.
-7. In the THETA Z1 WebRTC Receiver, update signalingUrl if the Z1 signaling server IP changed. Current value was ws://192.168.68.50:8765.
+7. In the THETA Z1 WebRTC Receiver, update signalingUrl if the Z1 signaling server IP changed. Current default is ws://127.0.0.1:8765.
 8. In AdaptiveFlyDroneCommandBroadcaster on XR Origin, update destinationHost/destinationPort if the drone bridge is not running locally. Default is 127.0.0.1:14560.
 9. Start the UDP receiver/bridge before Play. It should implement a timeout failsafe: if no packets arrive for 200-500 ms, send zero velocity / hover.
 10. Press C in Play mode to recenter the HMD origin and pitch. Keep the left controller/waist tracker at the waist if using body-anchor mode.

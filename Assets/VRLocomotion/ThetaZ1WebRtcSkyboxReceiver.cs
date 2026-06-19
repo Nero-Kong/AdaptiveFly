@@ -62,6 +62,9 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     [Range(-180f, 180f)]
     public float yawOffsetDegrees = 0f;
 
+    [Tooltip("Fixed equirectangular mount correction in degrees. Use this when the Z1 is mounted sideways, e.g. one fisheye up and one fisheye down.")]
+    public Vector3 staticMountEulerDegrees = Vector3.zero;
+
     [Tooltip("Color shown before the first WebRTC video frame arrives.")]
     public Color noSignalColor = new Color(0.02f, 0.025f, 0.035f, 1f);
 
@@ -1022,8 +1025,9 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
 
         imuCompensationEulerDeg = stabilizationEuler;
         Quaternion staticYaw = Quaternion.Euler(0f, yawOffsetDegrees + stabilizationEuler.y, 0f);
+        Quaternion staticMount = Quaternion.Euler(staticMountEulerDegrees);
         Quaternion rollPitch = Quaternion.Euler(stabilizationEuler.x, 0f, stabilizationEuler.z);
-        skyDomeRenderer.transform.localRotation = staticYaw * rollPitch;
+        skyDomeRenderer.transform.localRotation = staticYaw * staticMount * rollPitch;
     }
 
     private Texture GetDisplayTexture(Texture source)
@@ -1165,7 +1169,7 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
             if (_legacySkyboxMaterial != null)
             {
                 _legacySkyboxMaterial.SetTexture(MainTexId, texture);
-                _legacySkyboxMaterial.SetFloat("_Rotation", yawOffsetDegrees);
+                _legacySkyboxMaterial.SetFloat("_Rotation", yawOffsetDegrees + staticMountEulerDegrees.y);
                 RenderSettings.skybox = _legacySkyboxMaterial;
                 DynamicGI.UpdateEnvironment();
             }
@@ -1190,7 +1194,7 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         _legacySkyboxMaterial.SetFloat("_Mapping", 1f);
         _legacySkyboxMaterial.SetColor("_Tint", Color.white);
         _legacySkyboxMaterial.SetFloat("_Exposure", 1f);
-        _legacySkyboxMaterial.SetFloat("_Rotation", yawOffsetDegrees);
+        _legacySkyboxMaterial.SetFloat("_Rotation", yawOffsetDegrees + staticMountEulerDegrees.y);
     }
 
     private void MaybePollStats()
