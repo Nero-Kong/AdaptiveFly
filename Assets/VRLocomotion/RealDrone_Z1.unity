@@ -1352,6 +1352,8 @@ MonoBehaviour:
   statsPollIntervalSeconds: 1
   sendStatsToSignaling: 1
   drawStreamControls: 1
+  drawMountTuningControls: 1
+  mountTuningStepDegrees: 5
   status: Idle
   peerState: none
   iceState: none

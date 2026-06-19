@@ -102,6 +102,14 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     [Tooltip("Show native Z1 4K/2K switch buttons in the debug overlay.")]
     public bool drawStreamControls = true;
 
+    [Header("Runtime Mount Tuning")]
+    [Tooltip("Show live Z1 mount/orientation controls in the Game view debug overlay.")]
+    public bool drawMountTuningControls = true;
+
+    [Tooltip("Fine step used by the live mount/orientation nudge buttons.")]
+    [Range(0.1f, 45f)]
+    public float mountTuningStepDegrees = 5f;
+
     [Header("Status")]
     [SerializeField] private string status = "Idle";
     [SerializeField] private string peerState = "none";
@@ -1471,6 +1479,22 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
             GUI.enabled = true;
         }
 
+        float previewY = rect.yMax + 10f;
+        if (drawMountTuningControls)
+        {
+            float tuningWidth = Mathf.Min(460f, Screen.width - margin * 2f);
+            float tuningX = Screen.width - margin - tuningWidth;
+            float tuningY = margin;
+            if (tuningX < rect.xMax + margin)
+            {
+                tuningX = margin;
+                tuningY = rect.yMax + 10f;
+                previewY = tuningY + 318f + 10f;
+            }
+
+            DrawMountTuningPanel(new Rect(tuningX, tuningY, tuningWidth, 318f));
+        }
+
         if (!drawTexturePreview || _remoteTexture == null)
         {
             return;
@@ -1478,12 +1502,111 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
 
         int previewWidth = Mathf.Min(420, Screen.width / 3);
         int previewHeight = previewWidth / 2;
-        var previewRect = new Rect(margin, rect.yMax + 10, previewWidth, previewHeight);
+        var previewRect = new Rect(margin, previewY, previewWidth, previewHeight);
         GUI.color = new Color(0f, 0f, 0f, 0.65f);
         GUI.DrawTexture(previewRect, Texture2D.whiteTexture);
         GUI.color = Color.white;
         GUI.DrawTexture(previewRect, _remoteTexture, ScaleMode.ScaleToFit, false);
         GUI.Label(new Rect(previewRect.x + 6, previewRect.y + 4, previewRect.width - 12, 22), "Z1 equirect WebRTC texture");
+    }
+
+    private void DrawMountTuningPanel(Rect rect)
+    {
+        GUI.color = new Color(0f, 0f, 0f, 0.72f);
+        GUI.DrawTexture(rect, Texture2D.whiteTexture);
+        GUI.color = Color.white;
+
+        float y = rect.y + 8f;
+        GUI.Label(new Rect(rect.x + 10f, y, rect.width - 20f, 22f),
+            $"Z1 Mount Tuning  yaw={yawOffsetDegrees:F1} static=({staticMountEulerDegrees.x:F1}, {staticMountEulerDegrees.y:F1}, {staticMountEulerDegrees.z:F1})");
+        y += 28f;
+
+        y = DrawAngleControl(rect, y, "Yaw", ref yawOffsetDegrees);
+
+        Vector3 mount = staticMountEulerDegrees;
+        y = DrawAngleControl(rect, y, "X", ref mount.x);
+        y = DrawAngleControl(rect, y, "Y", ref mount.y);
+        y = DrawAngleControl(rect, y, "Z", ref mount.z);
+        staticMountEulerDegrees = mount;
+
+        y += 4f;
+        alsoSetRenderSettingsSkybox = GUI.Toggle(
+            new Rect(rect.x + 10f, y, rect.width - 20f, 22f),
+            alsoSetRenderSettingsSkybox,
+            "Also set RenderSettings.skybox (legacy panoramic path; ignores most static X/Z tuning)");
+        y += 24f;
+
+        enableImuStabilization = GUI.Toggle(
+            new Rect(rect.x + 10f, y, 190f, 22f),
+            enableImuStabilization,
+            "IMU horizon lock");
+        stabilizeTextureBeforeDisplay = GUI.Toggle(
+            new Rect(rect.x + 210f, y, 190f, 22f),
+            stabilizeTextureBeforeDisplay,
+            "Texture stabilize");
+        y += 28f;
+
+        const float buttonHeight = 24f;
+        float buttonWidth = Mathf.Min(92f, (rect.width - 50f) / 4f);
+        float x = rect.x + 10f;
+        if (GUI.Button(new Rect(x, y, buttonWidth, buttonHeight), "Stable"))
+        {
+            yawOffsetDegrees = 180f;
+            staticMountEulerDegrees = new Vector3(-90f, -90f, 0f);
+            alsoSetRenderSettingsSkybox = false;
+            enableImuStabilization = false;
+            stabilizeTextureBeforeDisplay = false;
+        }
+
+        x += buttonWidth + 10f;
+        if (GUI.Button(new Rect(x, y, buttonWidth, buttonHeight), "Zero"))
+        {
+            yawOffsetDegrees = 0f;
+            staticMountEulerDegrees = Vector3.zero;
+        }
+
+        x += buttonWidth + 10f;
+        if (GUI.Button(new Rect(x, y, buttonWidth, buttonHeight), "Log"))
+        {
+            Debug.Log($"[THETA Z1 WebRTC] Mount tuning: yaw={yawOffsetDegrees:F3}, staticMountEuler={staticMountEulerDegrees}, legacySkybox={alsoSetRenderSettingsSkybox}, imu={enableImuStabilization}, texStabilize={stabilizeTextureBeforeDisplay}", this);
+        }
+
+        y += buttonHeight + 8f;
+        GUI.Label(new Rect(rect.x + 10f, y, rect.width - 20f, 22f), $"Step={Mathf.Max(0.1f, mountTuningStepDegrees):F1} deg. Values update every frame in Play mode.");
+    }
+
+    private float DrawAngleControl(Rect rect, float y, string label, ref float value)
+    {
+        float step = Mathf.Max(0.1f, mountTuningStepDegrees);
+        float x = rect.x + 10f;
+        float rowWidth = rect.width - 20f;
+        GUI.Label(new Rect(x, y, 40f, 22f), label);
+        GUI.Label(new Rect(x + 42f, y, 64f, 22f), $"{value:F1}");
+
+        float buttonWidth = 38f;
+        float sliderX = x + 110f;
+        float sliderWidth = Mathf.Max(80f, rowWidth - 110f - buttonWidth * 5f - 20f);
+        value = GUI.HorizontalSlider(new Rect(sliderX, y + 4f, sliderWidth, 18f), value, -180f, 180f);
+
+        float buttonX = sliderX + sliderWidth + 6f;
+        if (GUI.Button(new Rect(buttonX, y, buttonWidth, 22f), "-90")) value = NormalizeDegrees(value - 90f);
+        buttonX += buttonWidth;
+        if (GUI.Button(new Rect(buttonX, y, buttonWidth, 22f), "-")) value = NormalizeDegrees(value - step);
+        buttonX += buttonWidth;
+        if (GUI.Button(new Rect(buttonX, y, buttonWidth, 22f), "+")) value = NormalizeDegrees(value + step);
+        buttonX += buttonWidth;
+        if (GUI.Button(new Rect(buttonX, y, buttonWidth, 22f), "+90")) value = NormalizeDegrees(value + 90f);
+        buttonX += buttonWidth;
+        if (GUI.Button(new Rect(buttonX, y, buttonWidth, 22f), "0")) value = 0f;
+
+        value = NormalizeDegrees(value);
+        return y + 30f;
+    }
+
+    private static float NormalizeDegrees(float degrees)
+    {
+        degrees = Mathf.Repeat(degrees + 180f, 360f) - 180f;
+        return Mathf.Approximately(degrees, -180f) ? 180f : degrees;
     }
 
     private static void SetTextureIfPresent(Material material, int propertyId, Texture texture)
