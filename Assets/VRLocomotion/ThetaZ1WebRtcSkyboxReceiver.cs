@@ -65,6 +65,9 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
     [Tooltip("Fixed equirectangular mount correction in degrees. Use this when the Z1 is mounted sideways, e.g. one fisheye up and one fisheye down.")]
     public Vector3 staticMountEulerDegrees = Vector3.zero;
 
+    [Tooltip("Screen-space roll correction in degrees around the viewer's forward axis. This keeps the centered forward direction unchanged.")]
+    public float viewRollOffsetDegrees = 0f;
+
     [Tooltip("Color shown before the first WebRTC video frame arrives.")]
     public Color noSignalColor = new Color(0.02f, 0.025f, 0.035f, 1f);
 
@@ -1026,8 +1029,9 @@ public sealed class ThetaZ1WebRtcSkyboxReceiver : MonoBehaviour
         imuCompensationEulerDeg = stabilizationEuler;
         Quaternion staticYaw = Quaternion.Euler(0f, yawOffsetDegrees + stabilizationEuler.y, 0f);
         Quaternion staticMount = Quaternion.Euler(staticMountEulerDegrees);
+        Quaternion viewRoll = Quaternion.AngleAxis(viewRollOffsetDegrees, Vector3.forward);
         Quaternion rollPitch = Quaternion.Euler(stabilizationEuler.x, 0f, stabilizationEuler.z);
-        skyDomeRenderer.transform.localRotation = staticYaw * staticMount * rollPitch;
+        skyDomeRenderer.transform.localRotation = viewRoll * staticYaw * staticMount * rollPitch;
     }
 
     private Texture GetDisplayTexture(Texture source)
