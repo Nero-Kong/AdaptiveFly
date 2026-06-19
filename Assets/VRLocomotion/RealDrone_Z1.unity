@@ -1336,7 +1336,7 @@ MonoBehaviour:
   autoCreateSkyDome: 1
   autoSkyDomeRadius: 50
   invertSphereForInnerViewing: 1
-  alsoSetRenderSettingsSkybox: 1
+  alsoSetRenderSettingsSkybox: 0
   disableLegacyProjectionComponents: 1
   yawOffsetDegrees: 180
   staticMountEulerDegrees: {x: -90, y: -90, z: 0}
