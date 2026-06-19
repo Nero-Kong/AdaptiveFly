@@ -38,7 +38,7 @@ Current RealDrone_Z1 setup:
   - yaw_deg_s: yaw-rate command in degrees/second
   - cmd_forward/cmd_right/cmd_down/cmd_up/cmd_yaw: normalized -1..1 command values
   - valid/has_body_anchor/using_hmd_fallback: state flags
-- The THETA Z1 WebRTC receiver displays an already-stitched equirectangular panorama. RealDrone_Z1 is currently testing a simple mount correction for the Z1 top-forward setup: staticMountEulerDegrees = (-180, -90, 0), yawOffsetDegrees = 180, with Z1 IMU horizon lock disabled.
+- The THETA Z1 WebRTC receiver displays an already-stitched equirectangular panorama. RealDrone_Z1 is currently testing a simple mount correction for the Z1 top-forward setup: staticMountEulerDegrees = (-90, -90, -90), yawOffsetDegrees = 180, with Z1 IMU horizon lock disabled.
 
 New machine setup checklist:
 1. Install Git and Git LFS.
